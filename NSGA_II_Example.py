@@ -198,7 +198,7 @@ rate_crossover = 20         # number of chromosomes that we apply crossower to
 rate_mutation = 20          # number of chromosomes that we apply mutation to
 rate_local_search = 10      # number of chromosomes that we apply local_search to
 step_size = 0.1             # coordinate displacement during local_search
-maximum_generation = 150    # number of iterations
+maximum_generation = 100    # number of iterations
 pop = random_population(n_var, pop_size, lb, ub)    # initial parents population P
 print(pop.shape)
 
@@ -218,6 +218,20 @@ for i in range(maximum_generation):
     fitness_values = evaluation(pop)
     pop = selection(pop, fitness_values, pop_size)  # we arbitrary set desired pereto front size = pop_size
     print('iteration:', i)
+    fig = plt.figure(dpi=300)
+    ax = fig.add_subplot(projection='3d')
+    for j in range(len(pop)):
+        x1 = pop[j][0]
+        x2 = pop[j][1]
+        x3 = pop[j][2]
+        ax.scatter(x1,x2,x3, marker='o', color='b')
+    ax.set_xlabel('x1')
+    ax.set_ylabel('x2')
+    ax.set_zlabel('x3')
+    ax.set_xlim3d(-5, 5)
+    ax.set_ylim3d(-5, 5)
+    ax.set_zlim3d(-5, 5)
+    ax.set_title(f"Iteration: {i}")
 
 # Pareto front visualization
 fitness_values = evaluation(pop)
@@ -233,6 +247,7 @@ print("______________")
 print("Fitness values:")
 print("  objective 1    objective 2")
 print(fitness_values)
+plt.figure(dpi=300)
 plt.scatter(fitness_values[:, 0],fitness_values[:, 1], label='Pareto optimal front')
 plt.legend(loc='best')
 plt.xlabel('Objective function F1')
