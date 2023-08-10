@@ -193,8 +193,8 @@ def selection(pop, fitness_values, pop_size):
 n_var = 3                   # chromosome has 3 coordinates/genes
 lb = [-5, -5, -5]
 ub = [5, 5, 5]
-pop_size = 150              # initial number of chormosomes
-rate_crossover = 20         # number of chromosomes that we apply crossower to
+pop_size = 150              # initial number of chromosomes
+rate_crossover = 20         # number of chromosomes that we apply crossover to
 rate_mutation = 20          # number of chromosomes that we apply mutation to
 rate_local_search = 10      # number of chromosomes that we apply local_search to
 step_size = 0.1             # coordinate displacement during local_search
@@ -202,7 +202,8 @@ maximum_generation = 100    # number of iterations
 pop = random_population(n_var, pop_size, lb, ub)    # initial parents population P
 print(pop.shape)
 
-
+best_fitnesses_1 = []
+best_fitnesses_2 = []
 # NSGA-II main loop
 for i in range(maximum_generation):
     offspring_from_crossover = crossover(pop, rate_crossover)
@@ -216,6 +217,10 @@ for i in range(maximum_generation):
     pop = np.append(pop, offspring_from_local_search, axis=0)
     # print(pop.shape)
     fitness_values = evaluation(pop)
+    j = fitness_values[:,0].argmin()
+    best_fitnesses_1.append(fitness_values[j,:])
+    j = fitness_values[:,1].argmin()
+    best_fitnesses_2.append(fitness_values[j,:])
     pop = selection(pop, fitness_values, pop_size)  # we arbitrary set desired pereto front size = pop_size
     print('iteration:', i)
     fig = plt.figure(dpi=300)
@@ -247,8 +252,12 @@ print("______________")
 print("Fitness values:")
 print("  objective 1    objective 2")
 print(fitness_values)
+best_fitnesses_1 = np.asarray(best_fitnesses_1)
+best_fitnesses_2 = np.asarray(best_fitnesses_2)
 plt.figure(dpi=300)
 plt.scatter(fitness_values[:, 0],fitness_values[:, 1], label='Pareto optimal front')
+plt.scatter(best_fitnesses_1[:,0],best_fitnesses_1[:,1], label="Optimal objective 1")
+plt.scatter(best_fitnesses_2[:,0],best_fitnesses_2[:,1], label="Optimal objective 2")
 plt.legend(loc='best')
 plt.xlabel('Objective function F1')
 plt.ylabel('Objective function F2')
