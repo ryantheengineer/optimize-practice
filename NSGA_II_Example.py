@@ -16,7 +16,7 @@ import math
 
 # Initialize random population of parent chormosomes/solutions P
 def random_population(n_var, n_sol, lb, ub):
-    # n_var = numver of variables
+    # n_var = number of variables
     # n_sol = number of random solutions
     # lb = lower bound
     # ub = upper bound
@@ -64,23 +64,23 @@ def mutation(pop, mutation_rate):
 
     return offspring    # arr(mutation_size x n_var)
 
-# Create some amount of offsprings Q by adding fixed coordinate displacement to some 
-# randomly selected parent's genes/coordinates
-def local_search(pop, n_sol, step_size):
-    # number of offspring chromosomes generated from the local search
-    offspring = np.zeros((n_sol, pop.shape[1]))
-    for i in range(n_sol):
-        r1 = np.random.randint(0, pop.shape[0])
-        chromosome = pop[r1, :]
-        r2 = np.random.randint(0, pop.shape[1])
-        chromosome[r2] += np.random.uniform(-step_size, step_size)
-        if chromosome[r2] < lb[r2]:
-            chromosome[r2] = lb[r2]
-        if chromosome[r2] > ub[r2]:
-            chromosome[r2] = ub[r2]
+# # Create some amount of offsprings Q by adding fixed coordinate displacement to some 
+# # randomly selected parent's genes/coordinates
+# def local_search(pop, n_sol, step_size):
+#     # number of offspring chromosomes generated from the local search
+#     offspring = np.zeros((n_sol, pop.shape[1]))
+#     for i in range(n_sol):
+#         r1 = np.random.randint(0, pop.shape[0])
+#         chromosome = pop[r1, :]
+#         r2 = np.random.randint(0, pop.shape[1])
+#         chromosome[r2] += np.random.uniform(-step_size, step_size)
+#         if chromosome[r2] < lb[r2]:
+#             chromosome[r2] = lb[r2]
+#         if chromosome[r2] > ub[r2]:
+#             chromosome[r2] = ub[r2]
 
-        offspring[i,:] = chromosome
-    return offspring    # arr(loc_search_size x n_var)
+#         offspring[i,:] = chromosome
+#     return offspring    # arr(loc_search_size x n_var)
 
 # Calculate fitness (obj function) values for each chormosome/solution
 # Kursawe function - https://en.wikipedia.org/wiki/Test_functions_for_optimization
@@ -189,77 +189,86 @@ def selection(pop, fitness_values, pop_size):
 
     return selected_pop     # arr(pop_size x n_var)
 
-# Parameters
-n_var = 3                   # chromosome has 3 coordinates/genes
-lb = [-5, -5, -5]
-ub = [5, 5, 5]
-pop_size = 150              # initial number of chromosomes
-rate_crossover = 20         # number of chromosomes that we apply crossover to
-rate_mutation = 20          # number of chromosomes that we apply mutation to
-rate_local_search = 10      # number of chromosomes that we apply local_search to
-step_size = 0.1             # coordinate displacement during local_search
-maximum_generation = 100    # number of iterations
-pop = random_population(n_var, pop_size, lb, ub)    # initial parents population P
-print(pop.shape)
-
-best_fitnesses_1 = []
-best_fitnesses_2 = []
-# NSGA-II main loop
-for i in range(maximum_generation):
-    offspring_from_crossover = crossover(pop, rate_crossover)
-    offspring_from_mutation = mutation(pop, rate_mutation)
-    offspring_from_local_search = local_search(pop, rate_local_search, step_size)
-    
-    # we append children Q (cross-overs, mutations, local search) to paraents P
-    # having parents in the mix, i.e. allowing for parents to progress to next iteration - Elitism
-    pop = np.append(pop, offspring_from_crossover, axis=0)
-    pop = np.append(pop, offspring_from_mutation, axis=0)
-    pop = np.append(pop, offspring_from_local_search, axis=0)
+def main_optimization():
+    # Parameters
+    n_var = 3                   # chromosome has 3 coordinates/genes
+    lb = [-5, -5, -5]
+    ub = [5, 5, 5]
+    pop_size = 150              # initial number of chromosomes
+    rate_crossover = 20         # number of chromosomes that we apply crossover to
+    rate_mutation = 20          # number of chromosomes that we apply mutation to
+    rate_local_search = 10      # number of chromosomes that we apply local_search to
+    step_size = 0.1             # coordinate displacement during local_search
+    maximum_generation = 100    # number of iterations
+    pop = random_population(n_var, pop_size, lb, ub)    # initial parents population P
     # print(pop.shape)
+    print("-"*60)
+    print("\t\tSTARTING NEW OPTIMIZATION")
+    print("-"*60)
+    
+    best_fitnesses_1 = []
+    best_fitnesses_2 = []
+    # NSGA-II main loop
+    for i in range(maximum_generation):
+        offspring_from_crossover = crossover(pop, rate_crossover)
+        offspring_from_mutation = mutation(pop, rate_mutation)
+        # offspring_from_local_search = local_search(pop, rate_local_search, step_size)
+        
+        # we append children Q (cross-overs, mutations, local search) to paraents P
+        # having parents in the mix, i.e. allowing for parents to progress to next iteration - Elitism
+        pop = np.append(pop, offspring_from_crossover, axis=0)
+        pop = np.append(pop, offspring_from_mutation, axis=0)
+        # pop = np.append(pop, offspring_from_local_search, axis=0)
+        print(pop.shape)
+        fitness_values = evaluation(pop)
+        j = fitness_values[:,0].argmin()
+        best_fitnesses_1.append(fitness_values[j,:])
+        j = fitness_values[:,1].argmin()
+        best_fitnesses_2.append(fitness_values[j,:])
+        pop = selection(pop, fitness_values, pop_size)  # we arbitrary set desired pereto front size = pop_size
+        print('iteration:', i)
+        fig = plt.figure(dpi=300)
+        ax = fig.add_subplot(projection='3d')
+        for j in range(len(pop)):
+            x1 = pop[j][0]
+            x2 = pop[j][1]
+            x3 = pop[j][2]
+            ax.scatter(x1,x2,x3, marker='o', color='b')
+        ax.set_xlabel('x1')
+        ax.set_ylabel('x2')
+        ax.set_zlabel('x3')
+        ax.set_xlim3d(-5, 5)
+        ax.set_ylim3d(-5, 5)
+        ax.set_zlim3d(-5, 5)
+        ax.set_title(f"Iteration: {i}")
+    
+    # Pareto front visualization
     fitness_values = evaluation(pop)
-    j = fitness_values[:,0].argmin()
-    best_fitnesses_1.append(fitness_values[j,:])
-    j = fitness_values[:,1].argmin()
-    best_fitnesses_2.append(fitness_values[j,:])
-    pop = selection(pop, fitness_values, pop_size)  # we arbitrary set desired pereto front size = pop_size
-    print('iteration:', i)
-    fig = plt.figure(dpi=300)
-    ax = fig.add_subplot(projection='3d')
-    for j in range(len(pop)):
-        x1 = pop[j][0]
-        x2 = pop[j][1]
-        x3 = pop[j][2]
-        ax.scatter(x1,x2,x3, marker='o', color='b')
-    ax.set_xlabel('x1')
-    ax.set_ylabel('x2')
-    ax.set_zlabel('x3')
-    ax.set_xlim3d(-5, 5)
-    ax.set_ylim3d(-5, 5)
-    ax.set_zlim3d(-5, 5)
-    ax.set_title(f"Iteration: {i}")
+    index = np.arange(pop.shape[0]).astype(int)
+    pareto_front_index = pareto_front_finding(fitness_values, index)
+    pop = pop[pareto_front_index, :]
+    # print("_________________")
+    # print("Optimal solutions:")
+    # print("       x1               x2                 x3")
+    # print(pop) # show optimal solutions
+    fitness_values = fitness_values[pareto_front_index]
+    # print("______________")
+    # print("Fitness values:")
+    # print("  objective 1    objective 2")
+    # print(fitness_values)
+    # best_fitnesses_1 = np.asarray(best_fitnesses_1)
+    # best_fitnesses_2 = np.asarray(best_fitnesses_2)
+    # plt.figure(dpi=300)
+    # plt.scatter(fitness_values[:, 0],fitness_values[:, 1], label='Pareto optimal front')
+    # plt.scatter(best_fitnesses_1[:,0],best_fitnesses_1[:,1], label="Optimal objective 1")
+    # plt.scatter(best_fitnesses_2[:,0],best_fitnesses_2[:,1], label="Optimal objective 2")
+    # plt.legend(loc='best')
+    # plt.xlabel('Objective function F1')
+    # plt.ylabel('Objective function F2')
+    # plt.grid(b=1)
+    # plt.show()
+    
+    return fitness_values
 
-# Pareto front visualization
-fitness_values = evaluation(pop)
-index = np.arange(pop.shape[0]).astype(int)
-pareto_front_index = pareto_front_finding(fitness_values, index)
-pop = pop[pareto_front_index, :]
-print("_________________")
-print("Optimal solutions:")
-print("       x1               x2                 x3")
-print(pop) # show optimal solutions
-fitness_values = fitness_values[pareto_front_index]
-print("______________")
-print("Fitness values:")
-print("  objective 1    objective 2")
-print(fitness_values)
-best_fitnesses_1 = np.asarray(best_fitnesses_1)
-best_fitnesses_2 = np.asarray(best_fitnesses_2)
-plt.figure(dpi=300)
-plt.scatter(fitness_values[:, 0],fitness_values[:, 1], label='Pareto optimal front')
-plt.scatter(best_fitnesses_1[:,0],best_fitnesses_1[:,1], label="Optimal objective 1")
-plt.scatter(best_fitnesses_2[:,0],best_fitnesses_2[:,1], label="Optimal objective 2")
-plt.legend(loc='best')
-plt.xlabel('Objective function F1')
-plt.ylabel('Objective function F2')
-plt.grid(b=1)
-plt.show()
+if __name__ == "__main__":
+    main_optimization()
