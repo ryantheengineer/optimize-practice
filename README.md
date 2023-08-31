@@ -1,2 +1,2 @@
 # optimize-practice
-Sandbox for learning optimization with Gekko Python library
+Sandbox for Python optimization methods
